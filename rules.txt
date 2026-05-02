@@ -1,0 +1,60 @@
+The 2-player game of barricade takes place on a board with 9x9 squares, 
+with the columns named a, b, c, d, e, f, g, h, i from West to East, 
+and the rows numbered 1, 2, 3, 4, 5, 6, 7, 8, 9 from South to North. 
+An edge is defined as a side that is shared by two squares on the board, 
+a vertex is defined as point that is the corner of four squares.
+
+Each player occupies one square at any given time, with player 1 (p1) 
+starting on e1 and player 2 (p2) starting on e9.
+The game ends if p1 reaches a square on row 9, resulting in a win for p1, 
+or if p2 reaches a square on row 1, resulting in a win for p2. 
+There are no draws.
+
+A barricade is a line whose length is two times the edge length of a 
+square on the board. The board starts out with no barricades placed. 
+All barricades on the board affect both players, no matter who placed them. 
+Each player starts with a barricade count of 10.
+
+Players take turns from the starting position, with p1 taking the first 
+turn. On each turn a player must either move or place a barricade, but 
+not both.
+
+Rules for moving when it is p1's turn:
+(1) p1 cannot move outside of the 9x9 board.
+(2) If the square occupied by p1 share an edge with an empty square, 
+    and that edge is not occupied by a barricade, p1 can move to the 
+    empty square.
+(3) If the square occupied by p1 share an edge with a square 
+    occupied by p2, and that edge is not taken by a barricade:
+    (a) p1 can jump over p2 in a straight line and land on 
+        the empty square on the opposite side of p2, 
+        provided the movement does not cross any barricades.
+    (b) If a straight jump cannot be done, p1 can jump in 
+        an L-shape and land on a square on either side of p2, 
+        provided the movement does not cross any barricades.
+(4) p1 cannot move to any square unspecified by the rules above.
+
+To find the rules for moving when it is p2's turn, simply replace 
+"p1" with "p2" and vice versa in the rules above.
+
+Rules for placing a barricade:
+(1) A barricade can only be placed on two edges that connect 
+    to form a straight line. Such barricade is said to occupy both edges, 
+    as well as the vertex between them.
+(2) The outer border of the board are off-limits for barricades. This 
+    rule is implicit by the definition of "edge" and "vertex" but restated 
+    for clarity.
+(3) Each edge can only be occupied by one barricade, therefore 
+    barricades cannot overlap.
+(4) Each vertex can only be occupied by one barricade, therefore 
+    barricades cannot cross but can be placed in a T-shape.
+(5) Once placed, a barricade is permanent for the duration of the game.
+(6) When a player places a barricade, their barricade count decrements.
+(7) A player whose barricade count is 0 cannot place any more barricades.
+(8) At all points during the game, if either player is hypothetically 
+    removed from the board the other player must have a sequence of moves 
+    to win. More intuitively, it is not allowed to place a barricade that 
+    blocks off all paths from p1 to row 9 or blocks off all paths from p2 
+    to row 1.
+
+
