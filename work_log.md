@@ -38,3 +38,16 @@
 - Step 4: Smoke-tested the engine with `clang++ -std=c++17 -Wall -Wextra -pedantic`.
 - Depth-1 opening search returned `has_move=1`, `score=110`, and `nodes=131`.
 - Step 5: Re-tested at depth 2; opening search returned `has_move=1`, `score=0`, and `nodes=392`.
+
+## 2026-05-10
+
+- Step 1: Read the appended notation rules in `rules.txt`.
+- Interpreted square move notation as a two-character destination square such as `e2`.
+- Interpreted barricade notation as `h` or `v` followed by a square name; the horizontal example `hd1` maps directly to the existing internal horizontal barricade anchor.
+- Step 2: Added notation helpers to `BarricadeState`: `square_notation()`, `barricade_notation()`, and `move_notation_to()`.
+- Added `BarricadeState::make_move(const std::string&)`, which parses notation, checks the existing legal move or barricade-placement rules, mutates the state only on success, advances the turn, and returns whether the move was made.
+- Step 3: Updated `BarricadeEngine::SearchResult` with `move_notation`.
+- Set `move_notation` in `best_move()` by comparing the input state with the selected legal child state.
+- Step 4: Smoke-tested notation support with `clang++ -std=c++17 -Wall -Wextra -pedantic`.
+- Verified `make_move("e2")` moves p1 and flips the turn, `make_move("hd1")` places a barricade and decrements p1's count, illegal notation leaves state unchanged, and the engine's depth-1 `move_notation` can be replayed successfully.
+- Step 5: Reviewed the final diff and confirmed the intended changed files are `barricade_state.hpp`, `barricade_engine.hpp`, and `work_log.md`.

@@ -4,12 +4,14 @@
 
 #include <algorithm>
 #include <limits>
+#include <string>
 #include <vector>
 
 struct BarricadeEngine {
     struct SearchResult {
         bool has_move = false;
         BarricadeState state;
+        std::string move_notation;
         int score = 0;
         int depth_searched = 0;
         int nodes_searched = 0;
@@ -55,6 +57,7 @@ struct BarricadeEngine {
 
         result.has_move = true;
         result.state = best_state;
+        result.move_notation = state.move_notation_to(best_state);
         result.score = best_score;
         return result;
     }

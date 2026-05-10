@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <initializer_list>
 #include <queue>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -47,6 +48,82 @@ struct BarricadeState {
 
     int p1_shortest_path_length() const { return shortest_path_length(p1, true); }
     int p2_shortest_path_length() const { return shortest_path_length(p2, false); }
+
+    static std::string square_notation(int sq) {
+        std::string out;
+        out.push_back(static_cast<char>('a' + col(sq)));
+        out.push_back(static_cast<char>('1' + row(sq)));
+        return out;
+    }
+
+    static std::string barricade_notation(const Barricade& b) {
+        std::string out;
+        out.push_back(b.horizontal ? 'h' : 'v');
+        out.push_back(static_cast<char>('a' + b.col));
+        out.push_back(static_cast<char>('1' + b.row));
+        return out;
+    }
+
+    std::string move_notation_to(const BarricadeState& next) const {
+        const int mover_before = p1_to_move ? p1 : p2;
+        const int mover_after = p1_to_move ? next.p1 : next.p2;
+        if (mover_before != mover_after) {
+            return square_notation(mover_after);
+        }
+
+        if (next.barricades.size() == barricades.size() + 1) {
+            for (const Barricade& candidate : next.barricades) {
+                bool already_present = false;
+                for (const Barricade& existing : barricades) {
+                    if (candidate == existing) {
+                        already_present = true;
+                        break;
+                    }
+                }
+                if (!already_present) {
+                    return barricade_notation(candidate);
+                }
+            }
+        }
+
+        return "";
+    }
+
+    bool make_move(const std::string& notation) {
+        if (terminal()) return false;
+
+        int dst = -1;
+        if (notation.size() == 2 && parse_square_notation(notation, 0, dst)) {
+            for (int legal_dst : legal_move_squares()) {
+                if (legal_dst != dst) continue;
+
+                (p1_to_move ? p1 : p2) = dst;
+                p1_to_move = !p1_to_move;
+                return true;
+            }
+            return false;
+        }
+
+        if (notation.size() == 3 && (notation[0] == 'h' || notation[0] == 'v') &&
+            parse_square_notation(notation, 1, dst)) {
+            Barricade b{col(dst), row(dst), notation[0] == 'h'};
+            const int remaining = p1_to_move ? p1_barricades : p2_barricades;
+            if (remaining <= 0 || !can_place_barricade(b)) {
+                return false;
+            }
+
+            barricades.push_back(b);
+            if (p1_to_move) {
+                --p1_barricades;
+            } else {
+                --p2_barricades;
+            }
+            p1_to_move = !p1_to_move;
+            return true;
+        }
+
+        return false;
+    }
 
     std::vector<BarricadeState> legal_next_states() const {
         std::vector<BarricadeState> out;
@@ -91,6 +168,17 @@ private:
 
     bool in_bounds(int c, int r) const {
         return 0 <= c && c < N && 0 <= r && r < N;
+    }
+
+    static bool parse_square_notation(const std::string& notation, int offset, int& sq) {
+        const int c = notation[offset] - 'a';
+        const int r = notation[offset + 1] - '1';
+        if (c < 0 || c >= N || r < 0 || r >= N) {
+            return false;
+        }
+
+        sq = square(c, r);
+        return true;
     }
 
     bool edge_blocked(int a, int b) const {
