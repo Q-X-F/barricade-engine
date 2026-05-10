@@ -51,3 +51,13 @@
 - Step 4: Smoke-tested notation support with `clang++ -std=c++17 -Wall -Wextra -pedantic`.
 - Verified `make_move("e2")` moves p1 and flips the turn, `make_move("hd1")` places a barricade and decrements p1's count, illegal notation leaves state unchanged, and the engine's depth-1 `move_notation` can be replayed successfully.
 - Step 5: Reviewed the final diff and confirmed the intended changed files are `barricade_state.hpp`, `barricade_engine.hpp`, and `work_log.md`.
+
+## 2026-05-10
+
+- Step 1: Reviewed the public API in `barricade_state.hpp` and `barricade_engine.hpp` for a standalone manual tester.
+- Decided to add a separate CLI file so the state and engine headers remain unchanged.
+- Step 2: Added `barricade_cli.cpp`, a standard input/output manual tester.
+- The CLI accepts direct move notation, `best`, `playbest`, `reset`, `depth <n>`, `moves`, `status`, `help`, and `quit`.
+- The CLI prints player locations, side to move, barricade counts, placed barricades, shortest-path distances, and terminal status.
+- Step 3: Compiled `barricade_cli.cpp` with `clang++ -std=c++17 -Wall -Wextra -pedantic`.
+- Ran a scripted CLI smoke test covering `status`, a manual move (`e2`), `best`, `playbest`, `reset`, `depth 1`, `moves`, and `quit`.
