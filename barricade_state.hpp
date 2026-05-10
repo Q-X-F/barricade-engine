@@ -45,9 +45,13 @@ struct BarricadeState {
     bool p2_won() const { return row(p2) == 0; }
     bool terminal() const { return p1_won() || p2_won(); }
 
+    int p1_shortest_path_length() const { return shortest_path_length(p1, true); }
+    int p2_shortest_path_length() const { return shortest_path_length(p2, false); }
+
     std::vector<BarricadeState> legal_next_states() const {
         std::vector<BarricadeState> out;
         if (terminal()) return out;
+        out.reserve(140);
 
         for (int dst : legal_move_squares()) {
             BarricadeState next(*this);
@@ -178,7 +182,12 @@ private:
     }
 
     bool has_path_to_goal(int start, bool for_p1) const {
+        return shortest_path_length(start, for_p1) >= 0;
+    }
+
+    int shortest_path_length(int start, bool for_p1) const {
         std::array<bool, NUM_SQUARES> seen{};
+        std::array<int, NUM_SQUARES> dist{};
         std::queue<int> q;
         seen[start] = true;
         q.push(start);
@@ -187,7 +196,7 @@ private:
             const int cur = q.front();
             q.pop();
             if ((for_p1 && row(cur) == N - 1) || (!for_p1 && row(cur) == 0)) {
-                return true;
+                return dist[cur];
             }
 
             const int cc = col(cur), cr = row(cur);
@@ -198,11 +207,12 @@ private:
                 const int nxt = square(nc, nr);
                 if (!seen[nxt] && !edge_blocked(cur, nxt)) {
                     seen[nxt] = true;
+                    dist[nxt] = dist[cur] + 1;
                     q.push(nxt);
                 }
             }
         }
 
-        return false;
+        return -1;
     }
 };

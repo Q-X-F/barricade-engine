@@ -25,3 +25,16 @@
 - Smoke-tested with:
   `clang++ -std=c++17 -Wall -Wextra -pedantic`
 - Starting position generated `131` legal next states: `3` pawn moves plus `128` initial barricade placements.
+
+## 2026-05-10
+
+- Step 1: Reviewed `rules.txt`, `barricade_state.hpp`, and this work log before adding the engine.
+- Decided to keep the rules implementation in `BarricadeState` as the source of truth and add minimax separately, with only small state-query helpers if needed for evaluation.
+- Step 2: Added public shortest-path helper methods for p1 and p2 so the engine can evaluate positions using the same edge-blocking logic as move generation.
+- Added a small reserve in `legal_next_states()` to avoid repeated vector growth during search.
+- Step 3: Added `barricade_engine.hpp` with a depth-limited alpha-beta minimax engine.
+- The engine uses p1-perspective scoring: terminal wins dominate, then shortest path advantage, pawn progress, and remaining barricade count.
+- Added move ordering based on the static evaluator so alpha-beta can prune earlier, while still relying on `BarricadeState::legal_next_states()` for legal move generation.
+- Step 4: Smoke-tested the engine with `clang++ -std=c++17 -Wall -Wextra -pedantic`.
+- Depth-1 opening search returned `has_move=1`, `score=110`, and `nodes=131`.
+- Step 5: Re-tested at depth 2; opening search returned `has_move=1`, `score=0`, and `nodes=392`.
