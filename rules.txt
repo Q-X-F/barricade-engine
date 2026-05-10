@@ -57,4 +57,22 @@ Rules for placing a barricade:
     blocks off all paths from p1 to row 9 or blocks off all paths from p2 
     to row 1.
 
+It is possible to record a partial or full game of barricade by specifying 
+a sequence of turns from the starting position. This is done using 
+algebraic notation, where pairs of turns by p1 and p2 are listed in order, 
+in the format "1. [p1t1] [p2t1] 2. [p1t2] [p2t2]" and so on, where [p1t1] 
+is the notation of the first turn of p1, and [p2t1] is the notation of the 
+first turn of p2 in response to [p1t1].
+
+Turn notation:
+(1) If the player moved to occupy a different square, the notation is 
+    simply the name of the new square, which is the column name 
+    concatenated with the row number. For example, moving from e1 to e2 
+    is recorded as "e2".
+(2) If the player placed a barricade, the first letter of the notation is 
+    "h" if the barrier is horizontal (West-East) and "v" if the barrier is 
+    vertical (South-North). This first letter is then concatenated with 
+    the name of the Southeast-most square whose edge is occupied by the 
+    barrier. For example, placing a horizontal barrier that divides d1 
+    and e1 from d2 and e2 is recorded as "hd1".
 
