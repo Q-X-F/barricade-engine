@@ -1,6 +1,6 @@
 # Barricade (Quoridor) Engine
 
-This project is a C++ engine for the board game Quoridor. Quoridor is now hosted as the online game Barricade at [barricade.gg](barricade.gg).
+This project is a C++ engine for the board game Quoridor. Quoridor is now hosted as the online game Barricade at [barricade.gg](https://barricade.gg/).
 The engine implements the game state, legal move generation, move notation, and a
 minimax-based engine that can suggest moves from a position.
 
