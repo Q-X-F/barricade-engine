@@ -100,15 +100,15 @@ private:
                 if (alpha >= beta) break;
             }
             return best;
+        } else {
+            int best = INF;
+            for (const BarricadeState& next : next_states) {
+                best = std::min(best, minimax(next, depth - 1, alpha, beta, nodes));
+                beta = std::min(beta, best);
+                if (alpha >= beta) break;
+            }
+            return best;
         }
-
-        int best = INF;
-        for (const BarricadeState& next : next_states) {
-            best = std::min(best, minimax(next, depth - 1, alpha, beta, nodes));
-            beta = std::min(beta, best);
-            if (alpha >= beta) break;
-        }
-        return best;
     }
 
     static std::vector<BarricadeState> ordered_next_states(const BarricadeState& state) {
