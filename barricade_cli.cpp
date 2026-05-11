@@ -90,7 +90,7 @@ void print_best_move(const BarricadeState& state, int depth, bool apply, Barrica
 
 int main() {
     BarricadeState state;
-    int depth = 2;
+    int depth = 3;
 
     std::cout << "Barricade manual tester. Type help for commands.\n";
     print_status(state, depth);

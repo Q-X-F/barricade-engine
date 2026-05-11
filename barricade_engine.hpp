@@ -17,9 +17,9 @@ struct BarricadeEngine {
         int nodes_searched = 0;
     };
 
-    int max_depth = 2;
+    int max_depth = 3;
 
-    explicit BarricadeEngine(int depth = 2) : max_depth(depth) {}
+    explicit BarricadeEngine(int depth = 3) : max_depth(depth) {}
 
     SearchResult best_move(const BarricadeState& state) const {
         SearchResult result;
@@ -72,9 +72,9 @@ struct BarricadeEngine {
         const int safe_p2_dist = p2_dist >= 0 ? p2_dist : BarricadeState::NUM_SQUARES;
 
         const int path_score = 100 * (safe_p2_dist - safe_p1_dist);
-        const int progress_score = 10 * (BarricadeState::row(state.p1) - (BarricadeState::N - 1 - BarricadeState::row(state.p2)));
+        //const int progress_score = 10 * (BarricadeState::row(state.p1) - (BarricadeState::N - 1 - BarricadeState::row(state.p2)));
         const int barricade_score = 6 * (state.p1_barricades - state.p2_barricades);
-        return path_score + progress_score + barricade_score;
+        return path_score + barricade_score;
     }
 
 private:

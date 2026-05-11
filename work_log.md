@@ -61,3 +61,9 @@
 - The CLI prints player locations, side to move, barricade counts, placed barricades, shortest-path distances, and terminal status.
 - Step 3: Compiled `barricade_cli.cpp` with `clang++ -std=c++17 -Wall -Wextra -pedantic`.
 - Ran a scripted CLI smoke test covering `status`, a manual move (`e2`), `best`, `playbest`, `reset`, `depth 1`, `moves`, and `quit`.
+
+## 2026-05-11 (human)
+
+- Manually removed progress_score from evaluate method in `barricade_engine.hpp`.
+- Used `barricade_cli.cpp` with the engine to solve daily puzzles on barricade.gg website, found significant performance boost from depth 2 to depth 3.
+- Set 3 as the default depth of the engine.
