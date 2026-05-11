@@ -67,3 +67,19 @@
 - Manually removed progress_score from evaluate method in `barricade_engine.hpp`.
 - Used `barricade_cli.cpp` with the engine to solve daily puzzles on barricade.gg website, found significant performance boost from depth 2 to depth 3.
 - Set 3 as the default depth of the engine.
+
+## 2026-05-11
+
+- Step 1: Reviewed the current fixed-depth engine and CLI behavior before adding time-limited search.
+- Decided to preserve existing `best`, `playbest`, and `depth` functionality while adding an optional time-limit mode backed by iterative deepening.
+- Step 2: Added `BarricadeEngine::best_move_with_time_limit(double seconds)`.
+- Added deadline-aware minimax checks and iterative deepening so timed search returns the best fully completed depth before the time limit, falling back to a static ordered legal move if no depth finishes.
+- Extended `SearchResult` with `timed_out` and `time_limit_seconds` while preserving the existing fixed-depth `best_move()` API.
+- Step 3: Updated `barricade_cli.cpp` with a `time <seconds>` command and `time off`.
+- `best` and `playbest` now use iterative deepening when a time limit is active, while retaining fixed-depth behavior when the time limit is disabled.
+- Status output now shows whether a time limit is active.
+- Step 4: Updated `README.md` to document `time <seconds>`, `time off`, and the iterative-deepening behavior used by timed `best` and `playbest`.
+- Step 5: Compiled the CLI with `clang++ -std=c++17 -O2 -Wall -Wextra -pedantic`.
+- Ran a scripted smoke test covering fixed-depth `best`, `time 0.01`, timed `best`, timed `playbest`, `time off`, and fixed-depth `best` again.
+- Step 6: Added deadline checks immediately after child-state generation and ordering, so timed search can stop promptly even when move generation consumes the remaining budget.
+- Step 7: Recompiled and reran the scripted smoke test after the additional deadline checks.

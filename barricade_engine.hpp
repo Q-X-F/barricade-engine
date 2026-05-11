@@ -3,6 +3,7 @@
 #include "barricade_state.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <limits>
 #include <string>
 #include <vector>
@@ -15,6 +16,8 @@ struct BarricadeEngine {
         int score = 0;
         int depth_searched = 0;
         int nodes_searched = 0;
+        bool timed_out = false;
+        double time_limit_seconds = 0.0;
     };
 
     int max_depth = 3;
@@ -22,10 +25,64 @@ struct BarricadeEngine {
     explicit BarricadeEngine(int depth = 3) : max_depth(depth) {}
 
     SearchResult best_move(const BarricadeState& state) const {
-        SearchResult result;
-        result.depth_searched = max_depth;
+        bool timed_out = false;
+        return search_to_depth(state, max_depth, nullptr, timed_out);
+    }
+
+    SearchResult best_move_with_time_limit(const BarricadeState& state, double seconds) const {
+        if (seconds <= 0.0) {
+            return best_move(state);
+        }
+
+        const Clock::time_point deadline = Clock::now() + std::chrono::duration_cast<Clock::duration>(
+            std::chrono::duration<double>(seconds));
+        SearchResult best_completed;
+        best_completed.time_limit_seconds = seconds;
 
         std::vector<BarricadeState> next_states = ordered_next_states(state);
+        if (next_states.empty()) {
+            best_completed.score = evaluate(state, 0);
+            best_completed.nodes_searched = 1;
+            return best_completed;
+        }
+
+        best_completed.has_move = true;
+        best_completed.state = next_states.front();
+        best_completed.move_notation = state.move_notation_to(best_completed.state);
+        best_completed.score = evaluate(best_completed.state, 0);
+
+        int total_nodes = 0;
+        for (int depth = 1; depth <= max_depth; ++depth) {
+            bool timed_out = false;
+            SearchResult current = search_to_depth(state, depth, &deadline, timed_out);
+            total_nodes += current.nodes_searched;
+
+            if (timed_out) {
+                best_completed.timed_out = true;
+                best_completed.nodes_searched = total_nodes;
+                return best_completed;
+            }
+
+            current.time_limit_seconds = seconds;
+            current.nodes_searched = total_nodes;
+            best_completed = current;
+        }
+
+        return best_completed;
+    }
+
+    SearchResult search_to_depth(const BarricadeState& state, int depth,
+                                 const std::chrono::steady_clock::time_point* deadline,
+                                 bool& timed_out) const {
+        SearchResult result;
+        result.depth_searched = depth;
+
+        std::vector<BarricadeState> next_states = ordered_next_states(state);
+        if (deadline_reached(deadline)) {
+            timed_out = true;
+            result.timed_out = true;
+            return result;
+        }
         if (next_states.empty()) {
             result.score = evaluate(state, 0);
             result.nodes_searched = 1;
@@ -40,8 +97,12 @@ struct BarricadeEngine {
 
         for (const BarricadeState& next : next_states) {
             int nodes = 0;
-            const int score = minimax(next, max_depth - 1, alpha, beta, nodes);
+            const int score = minimax(next, depth - 1, alpha, beta, nodes, deadline, timed_out);
             result.nodes_searched += nodes;
+            if (timed_out) {
+                result.timed_out = true;
+                return result;
+            }
 
             if ((maximize && score > best_score) || (!maximize && score < best_score)) {
                 best_score = score;
@@ -78,16 +139,32 @@ struct BarricadeEngine {
     }
 
 private:
+    using Clock = std::chrono::steady_clock;
+
     static constexpr int INF = std::numeric_limits<int>::max() / 4;
     static constexpr int WIN_SCORE = 1'000'000;
 
-    int minimax(const BarricadeState& state, int depth, int alpha, int beta, int& nodes) const {
+    static bool deadline_reached(const Clock::time_point* deadline) {
+        return deadline != nullptr && Clock::now() >= *deadline;
+    }
+
+    int minimax(const BarricadeState& state, int depth, int alpha, int beta, int& nodes,
+                const Clock::time_point* deadline, bool& timed_out) const {
+        if (deadline_reached(deadline)) {
+            timed_out = true;
+            return evaluate(state, depth);
+        }
+
         ++nodes;
         if (depth <= 0 || state.terminal()) {
             return evaluate(state, depth);
         }
 
         std::vector<BarricadeState> next_states = ordered_next_states(state);
+        if (deadline_reached(deadline)) {
+            timed_out = true;
+            return evaluate(state, depth);
+        }
         if (next_states.empty()) {
             return evaluate(state, depth);
         }
@@ -95,7 +172,8 @@ private:
         if (state.p1_to_move) {
             int best = -INF;
             for (const BarricadeState& next : next_states) {
-                best = std::max(best, minimax(next, depth - 1, alpha, beta, nodes));
+                best = std::max(best, minimax(next, depth - 1, alpha, beta, nodes, deadline, timed_out));
+                if (timed_out) return best;
                 alpha = std::max(alpha, best);
                 if (alpha >= beta) break;
             }
@@ -103,7 +181,8 @@ private:
         } else {
             int best = INF;
             for (const BarricadeState& next : next_states) {
-                best = std::min(best, minimax(next, depth - 1, alpha, beta, nodes));
+                best = std::min(best, minimax(next, depth - 1, alpha, beta, nodes, deadline, timed_out));
+                if (timed_out) return best;
                 beta = std::min(beta, best);
                 if (alpha >= beta) break;
             }

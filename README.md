@@ -62,6 +62,8 @@ hd1         Place a horizontal barricade
 best        Ask the engine for the best move
 playbest    Ask the engine for the best move and apply it
 depth 3     Set engine search depth
+time 2      Set a 2-second limit for best/playbest
+time off    Disable the time limit
 moves       Print the number of legal next states
 status      Print the current state
 reset       Reset to the starting position
@@ -72,8 +74,20 @@ The CLI reports player positions, side to move, remaining barricades, placed
 barricades, shortest-path distances, and whether a terminal state has been
 reached.
 
+When a time limit is active, `best` and `playbest` use iterative deepening. The
+engine searches depth 1, then depth 2, and so on up to the configured `depth`,
+returning the best move from the deepest completed search before the time limit.
+This is useful because pruning quality can vary sharply between positions.
+
 ## Performance Note
 
 The engine is much faster when compiled with optimization enabled. Use `-O2` for
 manual engine testing. Debug builds without optimization can be dramatically
-slower at deeper search depths.
+slower at deeper search depths. For unpredictable positions, set both a maximum
+depth and a time limit, for example:
+
+```text
+depth 6
+time 3
+best
+```
