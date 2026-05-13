@@ -83,3 +83,16 @@
 - Ran a scripted smoke test covering fixed-depth `best`, `time 0.01`, timed `best`, timed `playbest`, `time off`, and fixed-depth `best` again.
 - Step 6: Added deadline checks immediately after child-state generation and ordering, so timed search can stop promptly even when move generation consumes the remaining budget.
 - Step 7: Recompiled and reran the scripted smoke test after the additional deadline checks.
+
+## 2026-05-13
+
+- Step 1: Reviewed `barricade_state.hpp` to identify the vector scans in `edge_blocked()` and `can_place_barricade()`.
+- Decided to keep the existing `barricades` vector for move notation and CLI display, while adding indexed occupancy arrays for blocked east-west edges, blocked north-south edges, and occupied interior vertices.
+- Step 2: Added occupancy arrays to `BarricadeState`: `east_west_edges`, `north_south_edges`, and `vertices`.
+- Replaced `edge_blocked()` with direct indexed lookups and replaced the overlap/crossing scan in `can_place_barricade()` with vertex and edge occupancy checks.
+- Added `place_barricade_unchecked()` so legal move generation and notation-based move application update both the existing `barricades` vector and the new occupancy arrays.
+- Step 3: Smoke-tested the indexed representation with `clang++ -std=c++17 -O2 -Wall -Wextra -pedantic`.
+- Verified the initial legal state count remains 131, shortest paths remain 8 and 8, notation moves still apply, same-edge overlaps and same-vertex crossings are rejected, and a depth-2 engine search still returns a legal move.
+- Step 4: Compiled and smoke-tested `barricade_cli.cpp` against the new state representation.
+- Step 5: Benchmarked initial-position engine searches after the change: depth 3 took about 230 ms and depth 4 took about 8718 ms in this environment.
+- Step 6: Replayed every generated child state from a mid-game position through `make_move(move_notation_to(child))` and confirmed positions, counts, barricade vector, edge arrays, and vertex array matched for all 128 children.

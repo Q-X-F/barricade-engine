@@ -33,6 +33,9 @@ struct BarricadeState {
     int p1_barricades = 10;
     int p2_barricades = 10;
     std::vector<Barricade> barricades;
+    std::array<bool, N * (N - 1)> east_west_edges{};
+    std::array<bool, N * (N - 1)> north_south_edges{};
+    std::array<bool, (N - 1) * (N - 1)> vertices{};
 
     BarricadeState() = default;
     BarricadeState(const BarricadeState&) = default;
@@ -112,7 +115,7 @@ struct BarricadeState {
                 return false;
             }
 
-            barricades.push_back(b);
+            place_barricade_unchecked(b);
             if (p1_to_move) {
                 --p1_barricades;
             } else {
@@ -146,7 +149,7 @@ struct BarricadeState {
                         if (!can_place_barricade(b)) continue;
 
                         BarricadeState next(*this);
-                        next.barricades.push_back(b);
+                        next.place_barricade_unchecked(b);
                         if (p1_to_move) {
                             --next.p1_barricades;
                         } else {
@@ -170,6 +173,18 @@ private:
         return 0 <= c && c < N && 0 <= r && r < N;
     }
 
+    static constexpr int east_west_edge_index(int west_col, int row) {
+        return row * (N - 1) + west_col;
+    }
+
+    static constexpr int north_south_edge_index(int col, int south_row) {
+        return south_row * N + col;
+    }
+
+    static constexpr int vertex_index(int col, int row) {
+        return row * (N - 1) + col;
+    }
+
     static bool parse_square_notation(const std::string& notation, int offset, int& sq) {
         const int c = notation[offset] - 'a';
         const int r = notation[offset + 1] - '1';
@@ -184,22 +199,13 @@ private:
     bool edge_blocked(int a, int b) const {
         const int ac = col(a), ar = row(a);
         const int bc = col(b), br = row(b);
-        for (const Barricade& wall : barricades) {
-            if (wall.horizontal) {
-                if (ar + 1 == br || br + 1 == ar) {
-                    const int south_row = ar < br ? ar : br;
-                    if (south_row == wall.row && (ac == wall.col || ac == wall.col + 1) && ac == bc) {
-                        return true;
-                    }
-                }
-            } else {
-                if (ac + 1 == bc || bc + 1 == ac) {
-                    const int west_col = ac < bc ? ac : bc;
-                    if (west_col == wall.col && (ar == wall.row || ar == wall.row + 1) && ar == br) {
-                        return true;
-                    }
-                }
-            }
+        if (ac == bc && (ar + 1 == br || br + 1 == ar)) {
+            const int south_row = ar < br ? ar : br;
+            return north_south_edges[north_south_edge_index(ac, south_row)];
+        }
+        if (ar == br && (ac + 1 == bc || bc + 1 == ac)) {
+            const int west_col = ac < bc ? ac : bc;
+            return east_west_edges[east_west_edge_index(west_col, ar)];
         }
         return false;
     }
@@ -250,23 +256,37 @@ private:
             return false;
         }
 
-        for (const Barricade& existing : barricades) {
-            if (existing.col == b.col && existing.row == b.row) {
-                return false; // same vertex: overlap if parallel, crossing if perpendicular
+        if (vertices[vertex_index(b.col, b.row)]) {
+            return false; // same vertex: overlap if parallel, crossing if perpendicular
+        }
+
+        if (b.horizontal) {
+            if (north_south_edges[north_south_edge_index(b.col, b.row)] ||
+                north_south_edges[north_south_edge_index(b.col + 1, b.row)]) {
+                return false;
             }
-            if (existing.horizontal == b.horizontal) {
-                if (b.horizontal && existing.row == b.row && std::abs(existing.col - b.col) == 1) {
-                    return false; // same north-south edge would be occupied twice
-                }
-                if (!b.horizontal && existing.col == b.col && std::abs(existing.row - b.row) == 1) {
-                    return false; // same east-west edge would be occupied twice
-                }
+        } else {
+            if (east_west_edges[east_west_edge_index(b.col, b.row)] ||
+                east_west_edges[east_west_edge_index(b.col, b.row + 1)]) {
+                return false;
             }
         }
 
         BarricadeState next(*this);
-        next.barricades.push_back(b);
+        next.place_barricade_unchecked(b);
         return next.has_path_to_goal(p1, true) && next.has_path_to_goal(p2, false);
+    }
+
+    void place_barricade_unchecked(const Barricade& b) {
+        barricades.push_back(b);
+        vertices[vertex_index(b.col, b.row)] = true;
+        if (b.horizontal) {
+            north_south_edges[north_south_edge_index(b.col, b.row)] = true;
+            north_south_edges[north_south_edge_index(b.col + 1, b.row)] = true;
+        } else {
+            east_west_edges[east_west_edge_index(b.col, b.row)] = true;
+            east_west_edges[east_west_edge_index(b.col, b.row + 1)] = true;
+        }
     }
 
     bool has_path_to_goal(int start, bool for_p1) const {
